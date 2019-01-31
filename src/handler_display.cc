@@ -36,6 +36,8 @@ handler_display::window_title[25] = "TecnoballZ by TLK Games\0";
 bool handler_display::optionfull = false;
 bool handler_display::optionsync = true;
 
+SDL_Surface* rl_screen;
+
 /**
  * Create the object
  */
@@ -111,6 +113,9 @@ handler_display::initialize ()
 void
 handler_display::set_video_mode ()
 {
+#ifdef TECNOBALLZ_HANDHELD_CONSOLE
+	resolution = 1;
+#endif
   window_width = 320 * resolution;
   window_height = 240 * resolution;
   offsetplus = 64 * resolution;
@@ -134,7 +139,7 @@ handler_display::set_video_mode ()
   /* test if the video mode is available */
   Uint32 flag = SDL_ANYFORMAT;
 #ifdef TECNOBALLZ_HANDHELD_CONSOLE
-  flag = SDL_SWSURFACE | SDL_FULLSCREEN;
+  flag = SDL_SWSURFACE;
 #endif
   if (optionfull)
     {
@@ -151,8 +156,9 @@ handler_display::set_video_mode ()
     }
 
   /* initialize the video mode */
-  sdl_screen =
-    SDL_SetVideoMode (window_width, window_height, bitspixels, flag);
+  rl_screen = SDL_SetVideoMode (320, 480, 16, SDL_HWSURFACE);
+  sdl_screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 320, 240, 16, 0,0,0,0);
+  
   if (NULL == sdl_screen)
     {
       std::cerr << "!handler_display::set_video_mode() " <<
@@ -456,12 +462,18 @@ handler_display::window_update ()
     0, 0,
     (Uint16) window_width, (Uint16) window_height
   };
-  if (SDL_BlitSurface (game_surface, &source, sdl_screen, &destination) < 0)
+ if (SDL_BlitSurface (game_surface, &source, sdl_screen, &destination) < 0)
     {
       std::cerr << "(!)handler_display::window_update():" <<
                 "BlitSurface() return " << SDL_GetError () << std::endl;
     }
-  SDL_UpdateRect (sdl_screen, 0, 0, sdl_screen->w, sdl_screen->h);
+  
+  SDL_Surface* tmp;
+  tmp = SDL_DisplayFormat(sdl_screen);
+  SDL_SoftStretch(tmp, NULL, rl_screen, NULL);
+  SDL_Flip(rl_screen);
+  SDL_FreeSurface(tmp);
+  //SDL_UpdateRect (sdl_screen, 0, 0, sdl_screen->w, sdl_screen->h);
   if (tilt_offset > 0)
     {
       tilt_offset--;

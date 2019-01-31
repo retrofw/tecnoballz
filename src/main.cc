@@ -65,7 +65,7 @@ main (Sint32 arg_count, char **arg_values)
 #ifdef TECNOBALLZ_HANDHELD_CONSOLE
   /* Use atexit() to call the return-to-menu function,
    * in case of crashes, etc. */
-  atexit (returnToMenu);
+  /*atexit (returnToMenu);*/
 #endif
 
   configuration.load ();
